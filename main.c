@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Priority not in range 0..%d\n", TWINKL_LEVEL_COUNT);
 		exit(1);
 	}
+	twinkl_set_priority(&msg, priority);
+
 
 	int linecount = 0;
 	size_t len = 0;
