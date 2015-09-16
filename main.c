@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 	twinklsocket = twinklsocket_open(argv[1], port);
 
 	struct twinkl_message msg;
-	twinkl_init_message(&msg);
 
 	unsigned long priority;
 	priority = strtoul(argv[2], NULL, 0);
@@ -37,6 +36,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Priority not in range 0..%d\n", TWINKL_LEVEL_COUNT);
 		exit(1);
 	}
+
+	twinkl_init_message(&msg);
 	twinkl_set_priority(&msg, priority);
 
 
@@ -49,7 +50,19 @@ int main(int argc, char *argv[])
 	 * With abitrary many spaces btween the numbers and the colon
 	 * Example: "5 :   42"
 	 */
-	while(getline(&line, &len, stdin) > 1) {
+	while(!feof(stdin)) {
+		
+		// Try to read a line from stdin, if the line is empty send the packet
+		if(getline(&line, &len, stdin) <= 1) {
+			twinklsocket_send(twinklsocket, &msg);
+			printf("Twinkl paket sent.\n");
+			
+			twinkl_init_message(&msg);
+			twinkl_set_priority(&msg, priority);
+
+			continue;
+		}
+
 		char *colon, *end;
 		unsigned long chan, value; 
 
@@ -100,11 +113,6 @@ int main(int argc, char *argv[])
 
 	free(line);
 
-	twinklsocket_send(twinklsocket, &msg);
-
-	printf("Twinkl paket sent.\n");
-
 	twinklsocket_close(twinklsocket);
-
 	return 0;
 }
