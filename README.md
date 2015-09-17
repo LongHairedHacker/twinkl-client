@@ -34,3 +34,24 @@ being able to override it you have to set it to 0 in every packet you send.
 It is also a good Idea to send an empty packet (newline directly followed by a EOF) 
 before killing the client, as it will clear any leftover reserved channels
 for your priority level.
+
+
+Example Animations
+------------------
+Some example animations can be found in the animation folder.
+They can be connected to a twinkle-client process using a pipe.
+
+* `randomvalues.py` Sets all channels to a random value and quits
+* `fullwhite.py` Set the lightwall to full white (use *lightwall.lan* as host) and quits
+* `gradient.py` Displays a red/green gradient on the lightwall and quits
+* `matrix.py` Matrix animation for the lightwall (use *lightwall.lan* as host)
+
+**Examples:**
+
+```
+python2 fullwithe.py | ../bin/twinkl-client lightwall.lan 7
+python2 gradient.py | ../bin/twinkl-client lightwall.lan 7
+python2 matrix.py | ../bin/twinkl-client lightwall.lan 7
+
+python2 random.py | ../bin/twinkl-client ampel.lan 7
+```
