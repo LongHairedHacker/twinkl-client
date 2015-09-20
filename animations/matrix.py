@@ -43,7 +43,7 @@ def clear():
 			set_box(x, y, 0, 0, 0)
 
 
-class Collumn(object):
+class Column(object):
 	def __init__(self):
 		self.x = randint(0, WIDTH)
 		self.y = randint(-HEIGHT/2, -1)
@@ -64,22 +64,22 @@ class Collumn(object):
 			self.y += 1
 
 
-collumns = []
+columns = []
 # Add some initial collums
 for i in range(0, 16):
-	collumns.append(Collumn())
+	columns.append(Column())
 
 
 while(True):
 	clear();
 	
-	collumns = sorted(collumns, key = lambda c: -c.y)
+	columns = sorted(columns, key = lambda c: -c.y)
 
-	for i in range(0,len(collumns)):
-		if collumns[i].y - collumns[i].length > HEIGHT:
-			collumns[i] = Collumn()
-		collumns[i].update()
-		collumns[i].render()
+	for i in range(0,len(columns)):
+		if columns[i].y - columns[i].length > HEIGHT:
+			columns[i] = Column()
+		columns[i].update()
+		columns[i].render()
 
 	output_channels()
 	sleep(0.050)
