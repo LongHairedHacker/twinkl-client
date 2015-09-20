@@ -3,10 +3,10 @@
 
 #include "message.h"
 
-int twinklsocket_open(const char *host, const char *port);
+extern int twinklsocket_open(const char *host, const char *port);
 
-void twinklsocket_send(int sockfd, const struct twinkl_message *message);
+extern void twinklsocket_send(int sockfd, const struct twinkl_message *message);
 
-void twinklsocket_close(int sockfd);
+extern void twinklsocket_close(int sockfd);
 
 #endif

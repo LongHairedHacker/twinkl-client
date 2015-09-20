@@ -1,16 +1,13 @@
-TARGET = twinkl-client
-SRC = main.c twinklsocket.c
-HEADERS = include/twinklsocket.h 
+HEADERS = include/twinklsocket.h
+HEADERS += twinkl/include/twinkl.h twinkl/include/config.h twinkl/include/message.h
 OBJDIR = bin
 
 CC = clang
-CFLAGS = -Wall -O2 -I include -I twinkl/include 
-LDFLAGS = 
-
-OBJ = $(SRC:%.c=$(OBJDIR)/%.o)
+CFLAGS = -fPIC -Wall -O2 -I include -I twinkl/include
+LDFLAGS =
 
 
-all : start $(OBJDIR)/$(TARGET)
+all : start $(OBJDIR)/twinkl-client
 	@echo ":: Done !"
 
 start :
@@ -25,7 +22,10 @@ $(OBJDIR)/%.o : %.c Makefile $(HEADERS)
 	mkdir -p $$(dirname $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJDIR)/$(TARGET) : $(OBJ)
+$(OBJDIR)/twinklsocket.so : $(OBJDIR)/twinklsocket.o
+	$(CC) $+ -shared $(LDFLAGS) -o $@
+
+$(OBJDIR)/twinkl-client : $(OBJDIR)/main.o $(OBJDIR)/twinklsocket.so
 	$(CC) $+ $(LDFLAGS) -o $@
 
 clean :
