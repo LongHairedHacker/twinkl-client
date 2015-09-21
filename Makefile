@@ -7,7 +7,7 @@ CFLAGS = -fPIC -Wall -O2 -I include -I twinkl/include
 LDFLAGS =
 
 
-all : start $(OBJDIR)/twinkl-client
+all : start $(OBJDIR)/twinkl-client $(OBJDIR)/twinklclient.so
 	@echo ":: Done !"
 
 start :
@@ -22,10 +22,10 @@ $(OBJDIR)/%.o : %.c Makefile $(HEADERS)
 	mkdir -p $$(dirname $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJDIR)/twinklsocket.so : $(OBJDIR)/twinklsocket.o
+$(OBJDIR)/twinklclient.so : $(OBJDIR)/twinklsocket.o $(OBJDIR)/message_wrapper.o
 	$(CC) $+ -shared $(LDFLAGS) -o $@
 
-$(OBJDIR)/twinkl-client : $(OBJDIR)/main.o $(OBJDIR)/twinklsocket.so
+$(OBJDIR)/twinkl-client : $(OBJDIR)/main.o $(OBJDIR)/twinklsocket.o
 	$(CC) $+ $(LDFLAGS) -o $@
 
 clean :
