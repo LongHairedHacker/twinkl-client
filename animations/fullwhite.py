@@ -1,7 +1,10 @@
 #!/usr/bin/env python2
 
+import sys
+
 from random import randint
 from time import sleep
+
 from twinklclient import TwinklSocket, TwinklMessage
 
 HEIGHT = 8
@@ -31,10 +34,13 @@ def set_box(x,y,r,g,b):
 
 
 
+if len(sys.argv) != 3:
+	print "Usage: %s host priority" % sys.argv[0]
+	sys.exit(1)
 
-socket = TwinklSocket("localhost", "1337")
+socket = TwinklSocket(sys.argv[1], "1337")
 
-msg.set_priority(0);
+msg.set_priority(int(sys.argv[2]))
 
 for x in range(0, WIDTH):
 	for y in range(0, HEIGHT):
