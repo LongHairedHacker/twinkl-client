@@ -2,12 +2,12 @@
 
 from random import randint
 from time import sleep
-from subprocess import Popen, PIPE
+from twinklclient import TwinklSocket, TwinklMessage
 
 HEIGHT = 8
 WIDTH = 6
 
-# As viewn from the inside   
+# As viewn from the inside
 BOX_MAP = [
 			[357,  18, 369, 186, 249, 228,  51],
 			[279,  10,  57, 159, 300, 108, 204],
@@ -20,27 +20,35 @@ BOX_MAP = [
 		]
 
 
-channels = {}
+msg = TwinklMessage()
 
 def set_box(x,y,r,g,b):
 	if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
 		base_address = BOX_MAP[y][x]
-		channels[base_address] = r
-		channels[base_address + 1] = g
-		channels[base_address + 2] = b
+		msg[base_address] = r
+		msg[base_address + 1] = g
+		msg[base_address + 2] = b
 
 
-def output_channels():
-	for channel, value in channels.items():
-		print "%d : %d" % (channel, value)
-		
-	print ""
 
 
+socket = TwinklSocket("localhost", "1337")
+
+msg.set_priority(0);
 
 for x in range(0, WIDTH):
 	for y in range(0, HEIGHT):
 		set_box(x,y, 255, 255, 255)
 
 
-output_channels()
+socket.send(msg)
+
+sleep(5)
+
+msg.reset()
+msg.set_priority(0)
+socket.send(msg)
+
+msg.destroy()
+socket.close()
+
