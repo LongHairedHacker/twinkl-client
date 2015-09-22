@@ -31,12 +31,23 @@ COLORS = [
 
 channels = {}
 
+
 def set_box(x,y,r,g,b):
 	if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
 		base_address = BOX_MAP[y][x]
 		channels[base_address] = r
 		channels[base_address + 1] = g
 		channels[base_address + 2] = b
+
+
+def get_box(x, y):
+	base_address = BOX_MAP[y][x]
+	try:
+		res = [ channels[base_address], channels[base_address + 1], channels[base_address + 2] ]
+	except KeyError, e:
+		# If the array is still uninitialized, just return [0,0,0]
+		res = [ 0, 0, 0 ]
+	return res
 
 
 def output_channels():
@@ -75,7 +86,11 @@ class Background:
 
 		for x in range(0, WIDTH):
 			for y in range(0, HEIGHT):
-				set_box(x, y, self._current_bg_color[0], self._current_bg_color[1], self._current_bg_color[2])
+				color = get_box(x, y)
+				color[0] = 0.9 * color[0] + 0.1 * self._current_bg_color[0]
+				color[1] = 0.9 * color[1] + 0.1 * self._current_bg_color[1]
+				color[2] = 0.9 * color[2] + 0.1 * self._current_bg_color[2]
+				set_box(x, y, color[0], color[1], color[2])
 
 
 def audio_from_raw(raw):
