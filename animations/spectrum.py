@@ -84,12 +84,20 @@ class Background:
 				self._target_bg_color[i] = random.randint(0, 128)
 			self._bg_time = 0
 
-		for x in range(0, WIDTH):
-			for y in range(0, HEIGHT):
+		for x in range(WIDTH):
+			for y in range(HEIGHT):
 				color = get_box(x, y)
-				color[0] = 0.9 * color[0] + 0.1 * self._current_bg_color[0]
-				color[1] = 0.9 * color[1] + 0.1 * self._current_bg_color[1]
-				color[2] = 0.9 * color[2] + 0.1 * self._current_bg_color[2]
+
+				if y != HEIGHT - 1:
+					color_below = get_box(x, y + 1)
+				else:
+					color_below = self._current_bg_color
+
+				for i in range(3):
+					# fade into BG by adding just a little of the current BG color,
+					# add color from pixel below for a "upward flowing" effect
+					color[i] = 0.744 * color[i] + 0.056 * self._current_bg_color[i] + 0.2 * color_below[i]
+
 				set_box(x, y, color[0], color[1], color[2])
 
 
