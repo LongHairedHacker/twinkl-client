@@ -25,11 +25,12 @@ BOX_MAP = [
 
 COLORS = [
 			[50, 255, 50], [50, 255, 120], [50, 251, 255], [50, 120, 255],
-			[50, 50, 255], [180, 50, 255], [255, 50, 137], [255, 50, 50]
+			[50, 50, 255], [180, 50, 255], [255, 50, 198], [255, 50, 50]
 		]
 
 
 channels = {}
+
 
 def set_box(x,y,r,g,b):
 	if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
@@ -37,6 +38,16 @@ def set_box(x,y,r,g,b):
 		channels[base_address] = r
 		channels[base_address + 1] = g
 		channels[base_address + 2] = b
+
+
+def get_box(x, y):
+	base_address = BOX_MAP[y][x]
+	try:
+		res = [ channels[base_address], channels[base_address + 1], channels[base_address + 2] ]
+	except KeyError, e:
+		# If the array is still uninitialized, just return [0,0,0]
+		res = [ 0, 0, 0 ]
+	return res
 
 
 def output_channels():
@@ -73,9 +84,21 @@ class Background:
 				self._target_bg_color[i] = random.randint(0, 128)
 			self._bg_time = 0
 
-		for x in range(0, WIDTH):
-			for y in range(0, HEIGHT):
-				set_box(x, y, self._current_bg_color[0], self._current_bg_color[1], self._current_bg_color[2])
+		for x in range(WIDTH):
+			for y in range(HEIGHT):
+				color = get_box(x, y)
+
+				if y != HEIGHT - 1:
+					color_below = get_box(x, y + 1)
+				else:
+					color_below = self._current_bg_color
+
+				for i in range(3):
+					# fade into BG by adding just a little of the current BG color,
+					# add color from pixel below for a "upward flowing" effect
+					color[i] = 0.744 * color[i] + 0.056 * self._current_bg_color[i] + 0.2 * color_below[i]
+
+				set_box(x, y, color[0], color[1], color[2])
 
 
 def audio_from_raw(raw):
