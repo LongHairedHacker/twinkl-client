@@ -11,8 +11,8 @@ from twinklclient import TwinklSocket, TwinklMessage
 
 WIDTH = 6
 HEIGHT = 8
-AUDIO_RATE = 4000 # sampling rate in Hz
-WINDOW_SIZE = 8 # average fft over WINDOW_SIZE audio frames
+AUDIO_RATE = 16000 # sampling rate in Hz
+WINDOW_SIZE = 14 # average fft over WINDOW_SIZE audio frames
 
 BOX_MAP = [
 			[357,  18, 369, 186, 249, 228,  51],
@@ -156,18 +156,24 @@ class Fft_output:
 		self._out = twinkl_output
 
 		self._count = 0
-		self._data = []
-		for _ in range(width):
-			self._data.append(0)
+		self._data = [0] * width
 
 
 	def add(self, data):
 		"""add a set of fft data to the internal store, output the result if enough data is
 			available"""
-		abss = numpy.absolute(data[1:self._width+1])
+
+		binsize = 2
+
+		abss = numpy.absolute(data[0:binsize * self._width])
+
+		# sum fft values into bins
+		absum = [0] * self._width
+		for i in range(1, self._width * binsize):
+			absum[i / binsize] = absum[i / binsize] + abss[i]
 
 		for i in range(self._width):
-			self._data[i] = self._data[i] + abss[i]
+			self._data[i] = self._data[i] + absum[i]
 
 		self._count = self._count + 1
 		if (self._count == self._windowsize):
@@ -180,14 +186,13 @@ class Fft_output:
 	def output_twinkl(self):
 		"""output graph to twinkl client"""
 		# correct for disproportionately large first and second column
-		self._data[0] = self._data[0] / 2.5
-		self._data[1] = self._data[1] / 1.5
-
-		abss = numpy.absolute(self._data)
+		self._data[0] = self._data[0] / 2
+		self._data[1] = self._data[1] / 2.5
+		self._data[2] = self._data[2] / 1.5
 
 		self._background.clear()
 		for col in range(self._width):
-			normalized = min(int(abss[col] / (self._height * self._windowsize * 300)), self._height)
+			normalized = min(int(self._data[col] / (self._height * self._windowsize * 700)), self._height)
 			color = COLORS[normalized-1]
 			for row in range(self._height - normalized, self._height):
 				self._out.set_box(col, row, color[0], color[1], color[2])
@@ -200,6 +205,7 @@ def init_audio(rate):
 	ain = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL)
 	ain.setformat(alsaaudio.PCM_FORMAT_S16_LE)
 	ain.setrate(rate)
+	ain.setperiodsize(64)
 
 	return ain
 
