@@ -6,6 +6,8 @@ import random
 import time
 import sys
 
+from twinklclient import TwinklSocket, TwinklMessage
+
 
 WIDTH = 6
 HEIGHT = 8
@@ -32,6 +34,8 @@ COLORS = [
 channels = {}
 
 
+msg = TwinklMessage()
+
 def set_box(x,y,r,g,b):
 	if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
 		base_address = BOX_MAP[y][x]
@@ -48,13 +52,6 @@ def get_box(x, y):
 		# If the array is still uninitialized, just return [0,0,0]
 		res = [ 0, 0, 0 ]
 	return res
-
-
-def output_channels():
-	for channel, value in channels.items():
-		print("%d : %d" % (channel, value))
-	print("")
-	sys.stdout.flush()
 
 
 class Background:
@@ -96,7 +93,7 @@ class Background:
 				for i in range(3):
 					# fade into BG by adding just a little of the current BG color,
 					# add color from pixel below for a "upward flowing" effect
-					color[i] = 0.744 * color[i] + 0.056 * self._current_bg_color[i] + 0.2 * color_below[i]
+					color[i] = int(0.744 * color[i] + 0.056 * self._current_bg_color[i] + 0.2 * color_below[i])
 
 				set_box(x, y, color[0], color[1], color[2])
 
@@ -126,11 +123,12 @@ class Fft_output:
 	the aggregated result"""
 
 
-	def __init__(self, width, height, windowsize):
+	def __init__(self, width, height, windowsize, twinklsocket):
 		self._background = Background()
 		self._width = width
 		self._height = height
 		self._windowsize = windowsize
+		self._twinklsocket = twinklsocket
 
 		self._count = 0
 		self._data = []
@@ -168,7 +166,10 @@ class Fft_output:
 			color = COLORS[normalized-1]
 			for row in range(self._height - normalized, self._height):
 				set_box(col, row, color[0], color[1], color[2])
-		output_channels()
+
+		for _, val in enumerate(channels):
+			msg[val] = channels[val]
+		self._twinklsocket.send(msg)
 
 
 def init_audio(rate):
@@ -181,8 +182,15 @@ def init_audio(rate):
 
 
 def main():
+	if len(sys.argv) != 3:
+		print "Usage: %s host priority" % sys.argv[0]
+		sys.exit(1)
+
+	socket = TwinklSocket(sys.argv[1], "1337")
+	msg.set_priority(int(sys.argv[2]))
+
 	ain = init_audio(AUDIO_RATE)
-	fft_out = Fft_output(WIDTH, HEIGHT, WINDOW_SIZE)
+	fft_out = Fft_output(WIDTH, HEIGHT, WINDOW_SIZE, socket)
 
 	while True:
 		data = ain.read();
