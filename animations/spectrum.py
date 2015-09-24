@@ -77,22 +77,27 @@ class Background:
 
 
 def audio_from_raw(raw):
-	"""convert bytewise signed 16bit little endian to int list"""
+	"""convert bytewise signed 16bit little endian to int list, only take one stereo channel"""
 	out = []
-	high = False
+	sample_byte = 0
 	current = 0
+
 	for value in raw:
 		value = ord(value[0])
-		if high:
+		if sample_byte == 0:
+			current = value
+			sample_byte = 1
+		elif sample_byte == 1:
 			sign = value & 0x80
 			current = current + 256 * (value & 0x7F)
 			if sign:
 				current =  -((~current & 0x7FFF) + 1)
 			out.append(current)
-			high = False
+			sample_byte = 2
+		elif sample_byte == 2: # skip other stereo channel
+			sample_byte = 3
 		else:
-			current = value
-			high = True
+			sample_byte = 0
 	return out
 
 
@@ -182,7 +187,7 @@ class Fft_output:
 
 		self._background.clear()
 		for col in range(self._width):
-			normalized = min(int(abss[col] / (self._height * self._windowsize * 1000)), self._height)
+			normalized = min(int(abss[col] / (self._height * self._windowsize * 300)), self._height)
 			color = COLORS[normalized-1]
 			for row in range(self._height - normalized, self._height):
 				self._out.set_box(col, row, color[0], color[1], color[2])
