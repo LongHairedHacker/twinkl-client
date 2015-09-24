@@ -31,36 +31,14 @@ COLORS = [
 		]
 
 
-channels = {}
-
-
-msg = TwinklMessage()
-
-def set_box(x,y,r,g,b):
-	if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
-		base_address = BOX_MAP[y][x]
-		channels[base_address] = r
-		channels[base_address + 1] = g
-		channels[base_address + 2] = b
-
-
-def get_box(x, y):
-	base_address = BOX_MAP[y][x]
-	try:
-		res = [ channels[base_address], channels[base_address + 1], channels[base_address + 2] ]
-	except KeyError, e:
-		# If the array is still uninitialized, just return [0,0,0]
-		res = [ 0, 0, 0 ]
-	return res
-
-
 class Background:
 	"""clear the light wall to a pseudorandomly changing/fading solid color"""
 
-	def __init__(self):
+	def __init__(self, twinkl_output):
 		self._current_bg_color = [ 0, 0, 0 ]
 		self._target_bg_color = [ 128, 128, 128 ]
 		self._bg_time = 0
+		self._out = twinkl_output
 
 
 	def clear(self):
@@ -83,10 +61,10 @@ class Background:
 
 		for x in range(WIDTH):
 			for y in range(HEIGHT):
-				color = get_box(x, y)
+				color = self._out.get_box(x, y)
 
 				if y != HEIGHT - 1:
-					color_below = get_box(x, y + 1)
+					color_below = self._out.get_box(x, y + 1)
 				else:
 					color_below = self._current_bg_color
 
@@ -95,7 +73,7 @@ class Background:
 					# add color from pixel below for a "upward flowing" effect
 					color[i] = int(0.744 * color[i] + 0.056 * self._current_bg_color[i] + 0.2 * color_below[i])
 
-				set_box(x, y, color[0], color[1], color[2])
+				self._out.set_box(x, y, color[0], color[1], color[2])
 
 
 def audio_from_raw(raw):
@@ -118,17 +96,59 @@ def audio_from_raw(raw):
 	return out
 
 
+class Twinkl_output:
+	"""Wrapper class for TwinklSocket/TwinklMessage that keeps a frame buffer which allows write and
+	read access and takes care of mapping x/y coordinates to boxes"""
+
+
+	def __init__(self, hostname, port, priority):
+		self._socket = TwinklSocket(hostname, port)
+		self._msg = TwinklMessage()
+
+		self._msg.set_priority(int(priority))
+
+		self._channels = {}
+
+
+	def set_box(self, x,y,r,g,b):
+		if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
+			base_address = BOX_MAP[y][x]
+			self._channels[base_address] = r
+			self._channels[base_address + 1] = g
+			self._channels[base_address + 2] = b
+
+
+	def get_box(self, x, y):
+		base_address = BOX_MAP[y][x]
+		try:
+			res = [
+					self._channels[base_address],
+					self._channels[base_address + 1],
+					self._channels[base_address + 2]
+			]
+		except KeyError, e:
+			# If the array is still uninitialized, just return [0,0,0]
+			res = [ 0, 0, 0 ]
+		return res
+
+
+	def send(self):
+		for _, i in enumerate(self._channels):
+			self._msg[i] = self._channels[i]
+		self._socket.send(self._msg)
+
+
 class Fft_output:
 	"""aggregate several fft'ed samples, does postprocessing to make it look nice and outputs
 	the aggregated result"""
 
 
-	def __init__(self, width, height, windowsize, twinklsocket):
-		self._background = Background()
+	def __init__(self, width, height, windowsize, twinkl_output):
+		self._background = Background(twinkl_output)
 		self._width = width
 		self._height = height
 		self._windowsize = windowsize
-		self._twinklsocket = twinklsocket
+		self._out = twinkl_output
 
 		self._count = 0
 		self._data = []
@@ -165,11 +185,9 @@ class Fft_output:
 			normalized = min(int(abss[col] / (self._height * self._windowsize * 1000)), self._height)
 			color = COLORS[normalized-1]
 			for row in range(self._height - normalized, self._height):
-				set_box(col, row, color[0], color[1], color[2])
+				self._out.set_box(col, row, color[0], color[1], color[2])
 
-		for _, val in enumerate(channels):
-			msg[val] = channels[val]
-		self._twinklsocket.send(msg)
+		self._out.send()
 
 
 def init_audio(rate):
@@ -186,11 +204,10 @@ def main():
 		print "Usage: %s host priority" % sys.argv[0]
 		sys.exit(1)
 
-	socket = TwinklSocket(sys.argv[1], "1337")
-	msg.set_priority(int(sys.argv[2]))
+	output = Twinkl_output(sys.argv[1], "1337", sys.argv[2])
 
 	ain = init_audio(AUDIO_RATE)
-	fft_out = Fft_output(WIDTH, HEIGHT, WINDOW_SIZE, socket)
+	fft_out = Fft_output(WIDTH, HEIGHT, WINDOW_SIZE, output)
 
 	while True:
 		data = ain.read();
