@@ -29,18 +29,23 @@ _TWINKL_CLIENT.twinklsocket_open.argtypes = [c_char_p, c_char_p]
 _TWINKL_CLIENT.twinklsocket_open.restype = c_int
 
 _TWINKL_CLIENT.twinklsocket_send.argtypes = [c_int, c_void_p]
-_TWINKL_CLIENT.twinklsocket_send.restype = None
+_TWINKL_CLIENT.twinklsocket_send.restype = c_int
 
 
 class TwinklSocket(object):
 	def __init__(self, host, port):
 		self._socket = _TWINKL_CLIENT.twinklsocket_open(host, port)
+		if self._socket < 0:
+			print self._socket
+			raise RuntimeError("Could not open socket.")
 
 	def close(self):
 		_TWINKL_CLIENT.twinklsocket_close(self._socket)
 
 	def send(self, msg):
-		_TWINKL_CLIENT.twinklsocket_send(self._socket, msg._pointer)
+		result = _TWINKL_CLIENT.twinklsocket_send(self._socket, msg._pointer)
+		if result < 0:
+			raise RuntimeError("Could not send packet")
 
 
 class TwinklMessage(object):

@@ -49,9 +49,9 @@ They can be connected to a twinkle-client process using a pipe.
 **Examples:**
 
 ```
-python2 fullwithe.py | ../bin/twinkl-client lightwall.lan 7
 python2 gradient.py | ../bin/twinkl-client lightwall.lan 7
-python2 matrix.py | ../bin/twinkl-client lightwall.lan 7
+python2 fullwithe.py lightwall.lan 7
+python2 matrix.py lightwall.lan 7
 
 python2 random.py | ../bin/twinkl-client ampel.lan 7
 ```
@@ -67,11 +67,11 @@ It offers the following functions:
  * Functions for handling sockets
  */
 
-// Opens a 'connected' upd socket for this host and port, returns the filedescriptor
+// Opens a 'connected' upd socket for this host and port. Returns the filedescriptor or -1 on error.
 int twinklsocket_open(const char *host, const char *port);
 
-// Sends a twinkl message
-void twinklsocket_send(int sockfd, const struct twinkl_message *message);
+// Sends a twinkl message. Returns 0 on success else -1.
+int twinklsocket_send(int sockfd, const struct twinkl_message *message);
 
 // Closes the socket
 void twinklsocket_close(int sockfd);
@@ -119,12 +119,15 @@ Using the wrapper functions it is only necessary to deal with integers and point
 See `animations/twinklclient.py` and the example below for details.
 
 ```C
-twinkl_server = "127.0.0.1"
+twinkl_server = "127.0.0.1";
 port = "1337";
 
-fd = twinklsocket_open(twinkl_server, port)
+fd = twinklsocket_open(twinkl_server, port);
+if(fd == -1) {
+	PANIC();
+}
 
-msg = twinklmsg_create()
+msg = twinklmsg_create();
 
 twinklmsg_set_priority(msg, 0);
 
@@ -132,7 +135,10 @@ twinklmsg_set_value(msg, 23, 42);
 twinklmsg_set_value(msg, 46, 5);
 // ... more stuff
 
-twinklsocket_send(fd, msg);
+result = twinklsocket_send(fd, msg);
+if(result == -1) {
+	PANIC();
+}
 
 // Tear down
 

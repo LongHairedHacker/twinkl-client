@@ -5,7 +5,7 @@
 
 int twinklsocket_open(const char *host, const char *port);
 
-void twinklsocket_send(int sockfd, const struct twinkl_message *message);
+int twinklsocket_send(int sockfd, const struct twinkl_message *message);
 
 void twinklsocket_close(int sockfd);
 

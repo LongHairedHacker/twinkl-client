@@ -1,8 +1,12 @@
 #!/usr/bin/env python2
 
+import sys
+import signal
+
 from random import randint
 from time import sleep
-from subprocess import Popen, PIPE
+
+from twinklclient import TwinklSocket, TwinklMessage
 
 WIDTH = 6
 HEIGHT = 8
@@ -20,22 +24,17 @@ BOX_MAP = [
 		]
 
 
-channels = {}
+msg = TwinklMessage()
+socket = None
+priority = 0
 
 def set_box(x,y,r,g,b):
 	if x >= 0 and y >= 0 and x < WIDTH and y < HEIGHT:
 		base_address = BOX_MAP[y][x]
-		channels[base_address] = r
-		channels[base_address + 1] = g
-		channels[base_address + 2] = b
-
-
-def output_channels():
-	for channel, value in channels.items():
-		print "%d : %d" % (channel, value)
+		msg[base_address] = int(r)
+		msg[base_address + 1] = int(g)
+		msg[base_address + 2] = int(b)
 	
-	print ""
-
 
 def clear():
 	for x in range(0, WIDTH):
@@ -64,6 +63,29 @@ class Column(object):
 			self.y += 1
 
 
+
+def terminate(signal, frame):
+	msg.reset()
+	msg.set_priority(priority)
+	socket.send(msg)
+
+	if socket:
+		socket.close()
+	msg.destroy()
+	sys.exit(0)
+
+
+signal.signal(signal.SIGINT, terminate)
+
+if len(sys.argv) != 3:
+	print "Usage: %s host priority" % sys.argv[0]
+	sys.exit(1)
+
+socket = TwinklSocket(sys.argv[1], "1337")
+
+priority = int(sys.argv[2])
+msg.set_priority(priority)
+
 columns = []
 # Add some initial collums
 for i in range(0, 16):
@@ -81,5 +103,5 @@ while(True):
 		columns[i].update()
 		columns[i].render()
 
-	output_channels()
-	sleep(0.050)
+	socket.send(msg)
+	sleep(0.05)

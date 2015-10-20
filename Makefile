@@ -25,7 +25,7 @@ $(OBJDIR)/%.o : %.c Makefile $(HEADERS)
 $(OBJDIR)/twinklclient.so : $(OBJDIR)/twinklsocket.o $(OBJDIR)/message_wrapper.o
 	$(CC) $+ -shared $(LDFLAGS) -o $@
 
-$(OBJDIR)/twinkl-client : $(OBJDIR)/main.o $(OBJDIR)/twinklsocket.o
+$(OBJDIR)/twinkl-client : $(OBJDIR)/main.o $(OBJDIR)/twinklclient.so
 	$(CC) $+ $(LDFLAGS) -o $@
 
 clean :

@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
 	}
 
 	twinklsocket = twinklsocket_open(argv[1], port);
+	if(twinklsocket == -1) {
+		exit(1);
+	}
 
 	struct twinkl_message msg;
 
@@ -47,14 +50,18 @@ int main(int argc, char *argv[])
 
 	/*
 	 * Line format: <channel> : <value>
-	 * With abitrary many spaces btween the numbers and the colon
+	 * With arbitrary many spaces between the numbers and the colon
 	 * Example: "5 :   42"
 	 */
 	while(!feof(stdin)) {
 		
 		// Try to read a line from stdin, if the line is empty send the packet
 		if(getline(&line, &len, stdin) <= 1) {
-			twinklsocket_send(twinklsocket, &msg);
+			int result = twinklsocket_send(twinklsocket, &msg);
+			if(result != 0) {
+				printf("There was an error while sending the twinkl packet.\n");
+				exit(1);
+			}
 			printf("Twinkl paket sent.\n");
 			
 			twinkl_init_message(&msg);

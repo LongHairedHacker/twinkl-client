@@ -24,7 +24,7 @@ int twinklsocket_open(const char *host, const char *port) {
 	result = getaddrinfo(host, port, &hints, &servinfo);
 	if(result != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(result));
-		exit(1);
+		return -1;
 	}
 
 	// loop through all the results and make a socket
@@ -37,13 +37,13 @@ int twinklsocket_open(const char *host, const char *port) {
 
 	if (p == NULL) {
 		fprintf(stderr, "failed to create socket\n");
-		exit(1);
+		return -1;
 	}
 	
 	result = connect(sockfd, p->ai_addr, p->ai_addrlen);
 	if(result != 0) {
 		perror("connect");
-		exit(1);
+		return -1;
 	}
 
 	freeaddrinfo(servinfo);	
@@ -51,14 +51,16 @@ int twinklsocket_open(const char *host, const char *port) {
 	return sockfd;
 }
 
-void twinklsocket_send(int sockfd, const struct twinkl_message *message) {
+int twinklsocket_send(int sockfd, const struct twinkl_message *message) {
 	int numbytes;
 
 	numbytes = send(sockfd, message, sizeof(struct twinkl_message), 0);
 	if (numbytes == -1) {
 		perror("sendto");
-		exit(1);
+		return -1;
 	}
+
+	return 0;
 }
 
 void twinklsocket_close(int sockfd) {
