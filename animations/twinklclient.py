@@ -65,14 +65,14 @@ class TwinklMessage(object):
 		_TWINKL_CLIENT.twinklmsg_set_value(self._pointer, c_ushort(channel), c_ubyte(value))
 
 	def unset_value(self, channel):
-		_TWINKL_CLIENT.twinklmsg_set_value(self._pointer, c_ushort(channel))
+		_TWINKL_CLIENT.twinklmsg_unset_value(self._pointer, c_ushort(channel))
 
 
 	def __setitem__(self, channel, value):
 		if value == None:
 			self.unset_value(channel)
 		else:
-			self.set_value(channel, value)
+			self.set_value(channel, int(value))
 
 
 
